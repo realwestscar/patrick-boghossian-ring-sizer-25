@@ -17,11 +17,18 @@ const Header = () => {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.1, duration: 0.7 }}
         >
-          <img 
-            src="/lovable-uploads/10862b62-a836-4750-9fdf-d1ed7c82776d.png" 
-            alt="Patrick Boghossian Fine Jewellery" 
-            className="h-auto w-full max-w-[280px] md:max-w-[320px] mx-auto"
-          />
+          <a 
+            href="https://www.patrickboghossian.com/" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="inline-block hover:opacity-90 transition-opacity"
+          >
+            <img 
+              src="/lovable-uploads/10862b62-a836-4750-9fdf-d1ed7c82776d.png" 
+              alt="Patrick Boghossian Fine Jewellery" 
+              className="h-auto w-full max-w-[280px] md:max-w-[320px] mx-auto"
+            />
+          </a>
         </motion.div>
         <motion.h1 
           className="text-3xl md:text-4xl lg:text-5xl font-display font-medium text-burgundy"
