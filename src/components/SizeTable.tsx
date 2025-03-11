@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -74,11 +73,11 @@ const SizeTable: React.FC<SizeTableProps> = ({ diameterMm }) => {
       transition={{ duration: 0.6, delay: 0.3 }}
     >
       <Tabs defaultValue="usa" className="w-full" onValueChange={setActiveTab}>
-        <TabsList className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 mb-4 glassmorphism">
-          <TabsTrigger value="usa" className="text-xs md:text-sm">USA</TabsTrigger>
-          <TabsTrigger value="uk" className="text-xs md:text-sm">UK/AU</TabsTrigger>
-          <TabsTrigger value="eu" className="text-xs md:text-sm">EU</TabsTrigger>
-          <TabsTrigger value="asia" className="text-xs md:text-sm">JP/CN</TabsTrigger>
+        <TabsList className="mb-4 glassmorphism">
+          <TabsTrigger value="usa" className="flex-1 md:flex-none text-xs md:text-sm">USA</TabsTrigger>
+          <TabsTrigger value="uk" className="flex-1 md:flex-none text-xs md:text-sm">UK/AU</TabsTrigger>
+          <TabsTrigger value="eu" className="flex-1 md:flex-none text-xs md:text-sm">EU</TabsTrigger>
+          <TabsTrigger value="asia" className="flex-1 md:flex-none text-xs md:text-sm">JP/CN</TabsTrigger>
         </TabsList>
 
         {/* USA Size Content */}
