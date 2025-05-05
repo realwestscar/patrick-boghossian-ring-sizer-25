@@ -7,7 +7,6 @@ interface RingSizeVisualizerProps {
   unit: 'mm' | 'inches';
   measurementType: 'diameter' | 'circumference';
   onSizeChange: (sizeMm: number) => void;
-  calibrationFactor: number;
 }
 
 // Ring size mapping for reference (diameter in millimeters)
@@ -37,12 +36,7 @@ const ringSizes = {
   ],
 };
 
-const RingSizeVisualizer: React.FC<RingSizeVisualizerProps> = ({ 
-  unit, 
-  measurementType, 
-  onSizeChange, 
-  calibrationFactor 
-}) => {
+const RingSizeVisualizer: React.FC<RingSizeVisualizerProps> = ({ unit, measurementType, onSizeChange }) => {
   // Start with a reasonable default diameter
   const minDiameter = 14.0;
   const maxDiameter = 22.5;
@@ -71,8 +65,10 @@ const RingSizeVisualizer: React.FC<RingSizeVisualizerProps> = ({
     setDiameterMm(newDiameter);
   };
 
-  // Calculate visual size scaling based on calibration factor
-  let visualDiameter = diameterMm * calibrationFactor;
+  // Calculate visual size scaling
+  const maxVisualDiameter = 220; // max pixel diameter for the ring visual
+  const scale = diameterMm / maxDiameter;
+  const visualDiameter = maxVisualDiameter * scale;
 
   return (
     <motion.div 
@@ -85,55 +81,9 @@ const RingSizeVisualizer: React.FC<RingSizeVisualizerProps> = ({
         {/* Background grid pattern */}
         <div className="absolute inset-0 bg-grid opacity-10"></div>
 
-        {/* Physical measurements - horizontal and vertical rulers */}
-        {calibrationFactor > 0 && (
-          <>
-            <div className="absolute left-0 top-1/2 h-px w-full bg-burgundy/10">
-              <div className="relative h-4">
-                {Array.from({ length: Math.floor(maxDiameter) - Math.floor(minDiameter) + 1 }).map((_, index) => {
-                  const mm = Math.floor(minDiameter) + index;
-                  const position = ((mm - minDiameter) / (maxDiameter - minDiameter)) * 100;
-                  return (
-                    <div 
-                      key={`h-${mm}`} 
-                      className="absolute -translate-x-1/2" 
-                      style={{ left: `${position}%`, top: '-8px' }}
-                    >
-                      <div className="h-3 w-px bg-burgundy/30"></div>
-                      {mm % 2 === 0 && (
-                        <div className="text-[8px] text-burgundy/50 -translate-y-3">{mm}</div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-            <div className="absolute top-0 left-1/2 w-px h-full bg-burgundy/10">
-              <div className="relative w-4">
-                {Array.from({ length: Math.floor(maxDiameter) - Math.floor(minDiameter) + 1 }).map((_, index) => {
-                  const mm = Math.floor(minDiameter) + index;
-                  const position = ((mm - minDiameter) / (maxDiameter - minDiameter)) * 100;
-                  return (
-                    <div 
-                      key={`v-${mm}`} 
-                      className="absolute -translate-y-1/2" 
-                      style={{ top: `${position}%`, left: '-8px' }}
-                    >
-                      <div className="w-3 h-px bg-burgundy/30"></div>
-                      {mm % 2 === 0 && (
-                        <div className="text-[8px] text-burgundy/50 -translate-x-3">{mm}</div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </>
-        )}
-
         {/* Ring visualization */}
         <motion.div 
-          className="ring-circle z-10"
+          className="ring-circle"
           style={{ 
             width: `${visualDiameter}px`, 
             height: `${visualDiameter}px`,
@@ -174,20 +124,6 @@ const RingSizeVisualizer: React.FC<RingSizeVisualizerProps> = ({
             </div>
           </>
         )}
-
-        {/* Visual guide for placing ring */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <motion.div 
-            className="rounded-full border border-gold-light opacity-30"
-            style={{
-              width: visualDiameter + 20,
-              height: visualDiameter + 20
-            }}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: [0.1, 0.3, 0.1] }}
-            transition={{ repeat: Infinity, duration: 3 }}
-          ></motion.div>
-        </div>
       </div>
 
       {/* Size slider control */}
@@ -208,7 +144,7 @@ const RingSizeVisualizer: React.FC<RingSizeVisualizerProps> = ({
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5 }}
       >
-        <p>For the most accurate measurement, place your ring directly on the circle. Make sure you've calibrated your device first.</p>
+        <p>For the most accurate measurement, use a physical ring that fits well and place it over the circle to match sizes.</p>
       </motion.div>
     </motion.div>
   );
