@@ -14,6 +14,9 @@ const Footer = () => {
         For precise ring sizing, we recommend visiting a professional jeweler.
       </p>
       <p className="mt-2 text-xs font-sans">
+        This tool displays rings in actual physical size when properly calibrated.
+      </p>
+      <p className="mt-2 text-xs font-sans">
         © {new Date().getFullYear()} Ring Sizer Tool
       </p>
     </motion.footer>

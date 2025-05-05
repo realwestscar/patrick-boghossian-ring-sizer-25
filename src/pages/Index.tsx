@@ -7,6 +7,7 @@ import RingSizeVisualizer from '@/components/RingSizeVisualizer';
 import MeasurementControls from '@/components/MeasurementControls';
 import SizeTable from '@/components/SizeTable';
 import ShareButton from '@/components/ShareButton';
+import DeviceCalibration from '@/components/DeviceCalibration';
 import { toast } from 'sonner';
 
 const ringSizeData = [
@@ -33,6 +34,9 @@ const ringSizeData = [
   { diameterMm: 22.1, us: "13", uk: "Z+1", eu: "69 1/2", jp: "27", cn: "27" },
 ];
 
+// Local storage key for calibration
+const CALIBRATION_STORAGE_KEY = 'ring-sizer-calibration';
+
 const Index = () => {
   const [unit, setUnit] = useState<'mm' | 'inches'>('mm');
   const [measurementType, setMeasurementType] = useState<'diameter' | 'circumference'>('diameter');
@@ -44,11 +48,32 @@ const Index = () => {
     eu: "54 1/2",
     jp: "14"
   });
+  const [calibrationFactor, setCalibrationFactor] = useState(0);
+  const [isCalibrated, setIsCalibrated] = useState(false);
+  const [showCalibration, setShowCalibration] = useState(true);
 
+  // Load saved calibration on component mount
   useEffect(() => {
+    const savedCalibration = localStorage.getItem(CALIBRATION_STORAGE_KEY);
+    if (savedCalibration) {
+      try {
+        const parsedCalibration = JSON.parse(savedCalibration);
+        setCalibrationFactor(parsedCalibration.factor);
+        setIsCalibrated(true);
+        setShowCalibration(false);
+      } catch (error) {
+        console.error('Error loading calibration data:', error);
+      }
+    } else {
+      // Default calibration based on average device pixel density
+      // This will be overridden once user calibrates
+      const defaultFactor = window.devicePixelRatio ? window.devicePixelRatio * 3.78 : 3.78;
+      setCalibrationFactor(defaultFactor);
+    }
+
     // Show welcome toast on first load
     toast("Welcome to Ring Sizer", {
-      description: "Adjust the circle to find your perfect ring size",
+      description: "For accurate measurements, please calibrate your device",
       icon: "💍"
     });
   }, []);
@@ -84,6 +109,28 @@ const Index = () => {
     setDiameterMm(newDiameterMm);
   };
 
+  const handleCalibrate = (newCalibrationFactor: number) => {
+    setCalibrationFactor(newCalibrationFactor);
+    setIsCalibrated(true);
+    setShowCalibration(false);
+    
+    // Save calibration to local storage
+    localStorage.setItem(CALIBRATION_STORAGE_KEY, JSON.stringify({
+      factor: newCalibrationFactor,
+      timestamp: new Date().toISOString()
+    }));
+  };
+
+  const resetCalibration = () => {
+    localStorage.removeItem(CALIBRATION_STORAGE_KEY);
+    setIsCalibrated(false);
+    setShowCalibration(true);
+    
+    // Set to default calibration
+    const defaultFactor = window.devicePixelRatio ? window.devicePixelRatio * 3.78 : 3.78;
+    setCalibrationFactor(defaultFactor);
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       <motion.div 
@@ -96,6 +143,26 @@ const Index = () => {
       <Header />
       
       <main className="flex-1 px-4 py-8 container">
+        {showCalibration && (
+          <DeviceCalibration 
+            onCalibrate={handleCalibrate} 
+            isCalibrated={isCalibrated} 
+            onReset={resetCalibration}
+          />
+        )}
+
+        {!showCalibration && isCalibrated && (
+          <div className="flex justify-center mb-4">
+            <button 
+              onClick={() => setShowCalibration(true)}
+              className="text-sm text-burgundy/80 hover:text-burgundy transition-colors flex items-center gap-1"
+            >
+              <span>Device calibrated</span>
+              <span className="text-xs underline">(recalibrate)</span>
+            </button>
+          </div>
+        )}
+        
         <MeasurementControls 
           unit={unit} 
           setUnit={setUnit} 
@@ -107,6 +174,7 @@ const Index = () => {
           unit={unit} 
           measurementType={measurementType}
           onSizeChange={handleSizeChange}
+          calibrationFactor={calibrationFactor}
         />
         
         <SizeTable diameterMm={diameterMm} />
