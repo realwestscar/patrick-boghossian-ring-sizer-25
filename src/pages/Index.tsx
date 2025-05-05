@@ -8,6 +8,8 @@ import MeasurementControls from '@/components/MeasurementControls';
 import SizeTable from '@/components/SizeTable';
 import ShareButton from '@/components/ShareButton';
 import { toast } from 'sonner';
+import { useOrientation } from '@/hooks/use-orientation';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const ringSizeData = [
   { diameterMm: 14.1, us: "3", uk: "F", eu: "44", jp: "4", cn: "4" },
@@ -44,14 +46,44 @@ const Index = () => {
     eu: "54 1/2",
     jp: "14"
   });
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  
+  const orientation = useOrientation();
+  const isMobile = useIsMobile();
 
   useEffect(() => {
-    // Show welcome toast on first load
+    // Check if device orientation changed and show a toast with instructions
+    const handleOrientationChange = () => {
+      if (isMobile) {
+        if (orientation === 'landscape') {
+          toast("Landscape mode detected", {
+            description: "This view provides better precision for measuring rings",
+            icon: "📏"
+          });
+        }
+      }
+    };
+    
+    handleOrientationChange();
+    
+    // Welcome toast only on first load
     toast("Welcome to Ring Sizer", {
       description: "Adjust the circle to find your perfect ring size",
       icon: "💍"
     });
-  }, []);
+    
+    // Show usage tips after a short delay
+    const tipTimer = setTimeout(() => {
+      toast("Pro tip!", {
+        description: isMobile 
+          ? "Touch and drag the circle to resize, or pinch to zoom"
+          : "Click and drag the circle to resize precisely", 
+        icon: "💡"
+      });
+    }, 6000);
+    
+    return () => clearTimeout(tipTimer);
+  }, [orientation, isMobile]);
 
   // Find the closest ring size for the current diameter
   useEffect(() => {
@@ -75,6 +107,11 @@ const Index = () => {
         eu: closest.eu,
         jp: closest.jp
       });
+      
+      // Haptic feedback when matching a standard size
+      if (minDiff < 0.05 && window.navigator.vibrate) {
+        window.navigator.vibrate([30, 30, 30]);
+      }
     };
 
     findClosestSize();
@@ -82,6 +119,20 @@ const Index = () => {
 
   const handleSizeChange = (newDiameterMm: number) => {
     setDiameterMm(newDiameterMm);
+  };
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(e => {
+        console.log(`Error attempting to enable fullscreen: ${e.message}`);
+      });
+      setIsFullscreen(true);
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+        setIsFullscreen(false);
+      }
+    }
   };
 
   return (
@@ -93,15 +144,33 @@ const Index = () => {
         transition={{ duration: 1 }}
       />
       
-      <Header />
+      {/* Conditional rendering for header based on orientation on mobile */}
+      {!(isMobile && orientation === 'landscape') && <Header />}
       
-      <main className="flex-1 px-4 py-8 container">
-        <MeasurementControls 
-          unit={unit} 
-          setUnit={setUnit} 
-          measurementType={measurementType}
-          setMeasurementType={setMeasurementType}
-        />
+      <main className={`flex-1 px-4 ${
+        isMobile && orientation === 'landscape' ? 'py-2' : 'py-8'
+      } container`}>
+        {/* Controls positioned based on orientation */}
+        <div className={`${
+          isMobile && orientation === 'landscape' ? 'flex flex-col items-start space-y-2' : ''
+        }`}>
+          <MeasurementControls 
+            unit={unit} 
+            setUnit={setUnit} 
+            measurementType={measurementType}
+            setMeasurementType={setMeasurementType}
+          />
+          
+          {isMobile && (
+            <motion.button
+              className="glassmorphism px-4 py-2 rounded-full text-sm flex items-center justify-center mx-auto mb-4"
+              onClick={toggleFullscreen}
+              whileTap={{ scale: 0.95 }}
+            >
+              {isFullscreen ? "Exit Fullscreen" : "Fullscreen Mode"}
+            </motion.button>
+          )}
+        </div>
         
         <RingSizeVisualizer 
           unit={unit} 
@@ -109,12 +178,20 @@ const Index = () => {
           onSizeChange={handleSizeChange}
         />
         
-        <SizeTable diameterMm={diameterMm} />
-        
-        <ShareButton ringSize={currentRingSize} />
+        {/* Adjust layout of bottom components based on orientation */}
+        <div className={`${
+          isMobile && orientation === 'landscape' 
+            ? 'grid grid-cols-2 gap-4' 
+            : 'space-y-6'
+        }`}>
+          <SizeTable diameterMm={diameterMm} />
+          
+          <ShareButton ringSize={currentRingSize} />
+        </div>
       </main>
       
-      <Footer />
+      {/* Conditional rendering for footer based on orientation on mobile */}
+      {!(isMobile && orientation === 'landscape') && <Footer />}
     </div>
   );
 };
